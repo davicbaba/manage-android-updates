@@ -77,7 +77,7 @@ else
         <MudTd>
             <MudButton Variant="Variant.Filled" 
                        OnClick="() => Install(context)"
-                       Disabled="string.IsNullOrEmpty(context.FileName) || installingUrls.Contains(context.Url)">
+                       Disabled="context.Downloaded == false || installingUrls.Contains(context.Url)">
                 Install
             </MudButton>
         </MudTd>
@@ -96,7 +96,9 @@ else
     private List<string> installingUrls = new List<string>();
     private List<string> urls = new List<string>()
     { 
-        "https://davistest8d4e.blob.core.windows.net/test-auto-upgrade/nintendo-v2.apk"
+        "https://davistest8d4e.blob.core.windows.net/test-auto-upgrade/nintendo-1.0.0.apk",
+        "https://davistest8d4e.blob.core.windows.net/test-auto-upgrade/nintendo-2.0.0.apk",
+        "https://davistest8d4e.blob.core.windows.net/test-auto-upgrade/nintendo-3.0.0.apk"
     };
 
     private List<DeviceUpdate> updates = new List<DeviceUpdate>();
