@@ -37,7 +37,6 @@ else
 <MudTable Items="@updates" Hover="true" Breakpoint="Breakpoint.Sm" Loading="false" LoadingProgressColor="Color.Info">
     <HeaderContent>
         <MudTh>FileName</MudTh>
-        <MudTh>Installed</MudTh>
         <MudTh></MudTh>
         <MudTh></MudTh>
     </HeaderContent>
@@ -47,16 +46,6 @@ else
         </MudTd>
      
 
-        <MudTd>
-            @if (context.Installed)
-            {
-                @("Yes")
-            }
-            else
-            {
-                @("No")
-            }
-        </MudTd>
         <MudTd >
             <MudButton Variant="Variant.Filled" 
                        Disabled="downloadingUrls.Contains(context.Url)"
