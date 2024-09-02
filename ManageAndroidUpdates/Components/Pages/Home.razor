@@ -1,5 +1,212 @@
-﻿@page "/"
+﻿@using ManageAndroidUpdates.Abstract
+@using ManageAndroidUpdates.Components.Model
+@using ManageAndroidUpdates.Helper
+@using MudBlazor
+@page "/"
+@inject IUpdateService _updateService;
+@inject ISnackbar Snackbar
 
-<h1>Hello, world!</h1>
+<h1>Update manager!</h1>
 
-Welcome to your new app.
+
+<br />
+<br />
+
+@if (IsDeviceOwner == false)
+{
+    <MudAlert Severity="Severity.Warning">You are NOT a device owner</MudAlert>
+}
+else
+{
+    <MudAlert Severity="Severity.Success">YOU ARE a device owner</MudAlert>
+}
+
+<br />
+<br />
+
+@if (IsDeviceOwner)
+{
+    <MudButton Variant="Variant.Filled" OnClick="RemoveDeviceOwner">Remove Device Owner</MudButton>
+}
+
+<br />
+<br />
+
+<MudButton Variant="Variant.Filled" OnClick="DownloadAll">Download All</MudButton>
+
+<MudTable Items="@updates" Hover="true" Breakpoint="Breakpoint.Sm" Loading="false" LoadingProgressColor="Color.Info">
+    <HeaderContent>
+        <MudTh>FileName</MudTh>
+        <MudTh>Installed</MudTh>
+        <MudTh></MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd >
+            @context.FileName
+        </MudTd>
+     
+
+        <MudTd>
+            @if (context.Installed)
+            {
+                @("Yes")
+            }
+            else
+            {
+                @("No")
+            }
+        </MudTd>
+        <MudTd >
+            <MudButton Variant="Variant.Filled" 
+                       Disabled="downloadingUrls.Contains(context.Url)"
+                       OnClick="() => Download(context)">
+                       
+                       @if(downloadingUrls.Contains(context.Url))
+                       {
+                           @("Downloading");
+
+                       }else 
+                       {
+                           @("Download");
+                       }
+                     
+                       
+            </MudButton>
+        </MudTd>
+        <MudTd>
+            <MudButton Variant="Variant.Filled" 
+                       OnClick="() => Install(context)"
+                       Disabled="string.IsNullOrEmpty(context.FileName) || installingUrls.Contains(context.Url)">
+                Install
+            </MudButton>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+<br />
+
+@if (string.IsNullOrEmpty(ErrorMessage) == false)
+{
+    <MudAlert Severity="Severity.Error">@ErrorMessage</MudAlert>
+}
+
+@code{
+    private List<string> downloadingUrls = new List<string>();
+    private List<string> installingUrls = new List<string>();
+    private List<string> urls = new List<string>()
+    { 
+        "https://davistest8d4e.blob.core.windows.net/test-auto-upgrade/nintendo-v2.apk"
+    };
+
+    private List<DeviceUpdate> updates = new List<DeviceUpdate>();
+    private bool IsDeviceOwner = false;
+    private string ErrorMessage = "";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsDeviceOwner = _updateService.IsDeviceOwner();
+
+        foreach(var url in urls)
+        {
+            string fileName = FileHelper.GetFileNameFromUrl(url);
+            string filePath = FileHelper.GetFilePath(fileName);
+            bool fileExist = _updateService.FileExist(filePath);
+
+            var deviceUpdate = new DeviceUpdate()
+            {
+                Url = url,
+                Downloaded = fileExist,
+                FileName = fileName,
+                FilePath = filePath
+            };
+
+            updates.Add(deviceUpdate);
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task DownloadAll()
+    {
+        foreach (var update in updates.Where(x => x.Downloaded == false))
+        {
+            await Download(update);
+        }
+    }
+
+
+    private async Task Download(DeviceUpdate device)
+    {
+        downloadingUrls.Add(device.Url);
+
+        StateHasChanged();
+        ApkInfo file;
+        try
+        {
+            file = await _updateService.DownloadApkAsync(device.Url);
+
+        }
+        catch(Exception ex)
+        {
+            PrintError(ex);
+            throw;
+        }
+
+
+        device.Downloaded = true;
+        device.FileName = file.FileName;
+        device.FilePath = file.FilePath;
+
+        downloadingUrls.Remove(device.Url);
+        StateHasChanged();
+
+        Snackbar.Add($"File {file.FileName} downloaded successfully", Severity.Success);
+    }
+
+    private void Install(DeviceUpdate device)
+    {
+        try
+        {
+            installingUrls.Add(device.Url);
+
+            StateHasChanged();
+
+            _updateService.InstallApk(device.FilePath);
+        }
+        catch (Exception ex)
+        {
+            PrintError(ex);
+            throw;
+        }
+        finally
+        {
+            installingUrls.Remove(device.Url);
+
+        }
+    }
+
+    private void RemoveDeviceOwner()
+    {
+        try
+        {
+            _updateService.RemoveDeviceOwner();
+            IsDeviceOwner = _updateService.IsDeviceOwner();
+        }
+        catch (Exception ex)
+        {
+            PrintError(ex);
+            throw;
+        }
+
+    }
+
+
+    private void PrintError(Exception ex)
+    {
+        ErrorMessage = ex.Message;
+        StateHasChanged();
+    }
+
+}

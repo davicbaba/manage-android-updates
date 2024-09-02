@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using DavisCruz.Services;
+using ManageAndroidUpdates.Abstract;
+using Microsoft.Extensions.Logging;
+using MudBlazor.Services;
 
 namespace ManageAndroidUpdates
 {
@@ -15,9 +18,11 @@ namespace ManageAndroidUpdates
                 });
 
             builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddMudServices();
+            builder.Services.AddScoped<IUpdateService, UpdateService>();
 
 #if DEBUG
-    		builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
 #endif
 

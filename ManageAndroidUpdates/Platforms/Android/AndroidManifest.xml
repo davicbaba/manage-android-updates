@@ -1,6 +1,36 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true"></application>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
+
+
+    <application android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true">
+      <!-- Configuración del FileProvider -->
+      <provider
+          android:name="androidx.core.content.FileProvider"
+          android:authorities="ManageAndroidUpdates.fileprovider"
+          android:exported="false"
+          android:grantUriPermissions="true">
+        <meta-data
+            android:name="android.support.FILE_PROVIDER_PATHS"
+            android:resource="@xml/file_paths" />
+      </provider>
+
+      <!-- Configuración del Receiver -->
+      <receiver
+          android:name="com.companyname.manageandroidupdates.MyDeviceAdminReceiver"
+          android:permission="android.permission.BIND_DEVICE_ADMIN"
+          android:exported="true">
+        <!-- Se añadió android:exported -->
+        <meta-data
+            android:name="android.app.device_admin"
+            android:resource="@xml/device_admin_receiver" />
+        <intent-filter>
+          <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+        </intent-filter>
+      </receiver>
+    </application>
+
 </manifest>
